@@ -1,10 +1,18 @@
 # HC‐SR04 Ultrasonic Emergency Stop: Design & Implementation
 ---
-### Robot Configuration
+## Robot Configuration
 
 The robot is built on an **Adafruit M0 Feather** microcontroller and is equipped with **four mecanum wheels**, allowing it to move in all directions, including sideways.  
 
 An **ultrasonic distance sensor** (HC-SR04) is mounted at the front of the robot to detect obstacles and measure distances in real time. The microcontroller reads the sensor measurements and uses them to control the robot's motion.
+
+---
+## Task Description
+
+The robot is programmed to perform an **emergency stop** when moving forward in directions **N (North), NW (North-West), or NE (North-East)**.  
+
+Since the **ultrasonic sensor** is mounted at the front of the robot, it can detect obstacles only in these forward directions. When an obstacle is detected within the defined threshold, the robot immediately stops to prevent collisions.
+
 
 ---
 ## Sensor Functionality
@@ -68,6 +76,9 @@ The behavior is as follows:
 5. Once the obstacle reaches 40 cm, the robot resumes motion.
 
 The gap between the stop and resume thresholds prevents rapid oscillations when the measured distance fluctuates around a single value.
+
+---
+## Implementation
 
 ---
 ## References
