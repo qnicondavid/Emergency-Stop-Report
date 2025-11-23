@@ -80,6 +80,83 @@ The gap between the stop and resume thresholds prevents rapid oscillations when 
 ---
 ## Implementation
 
+### Hysteresis
+The emergency stop uses **hysteresis**, meaning there are two thresholds:
+- `EMERGENCY_STOP_DISTANCE` - distance at which the robot stops.
+- `EMERGENCY_RESUME_DISTANCE` - distance at which the robot resumes motion once the obstacle moves away.
+### `loop()` Function Logic
+In the `loop()` function, the distance is continuously measured using the ultrasonic sensor:
+
+```cpp
+long distance = getDistanceCM();
+```
+The emergency stop is only checked if the feature is activated and the robot is moving forward:
+```cpp
+if (emergencyActivated) {
+    bool forwardMovement = movingNorth || movingNorthEast || movingNorthWest;
+    if (forwardMovement) {
+        if (distance < EMERGENCY_STOP_DISTANCE) emergencyStopped = true;
+        else if (distance > EMERGENCY_RESUME_DISTANCE) emergencyStopped = false;
+
+        if (emergencyStopped) {
+            stopAllMotors();
+            return;
+        }
+    }
+}
+```
+`movingNorth`, `movingNorthEast`, and `movingNorthWest` are **flags** indicating the robot’s current forward movement.
+
+If the measured distance is **below the stop threshold**, the robot stops immediately by calling:
+
+```cpp
+stopAllMotors();
+```
+If the distance later exceeds the resume threshold, `emergencyStopped` is set to false and the robot can resume motion.
+
+### Distance Measurement
+
+The distance is obtained from the ultrasonic sensor with the following function:
+
+```cpp
+long getDistanceCM() {
+  digitalWrite(TRIG_PIN, LOW);
+  delayMicroseconds(2);
+  digitalWrite(TRIG_PIN, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(TRIG_PIN, LOW);
+
+  long duration = pulseIn(ECHO_PIN, HIGH, 30000); 
+  if (duration == 0) return 999; // timeout value
+
+  long distance = duration / 58; // convert microseconds to cm
+  return distance;
+}
+```
+A 10 µs pulse triggers the sensor.
+
+`pulseIn` measures the echo time.
+
+Distance in centimeters is calculated by dividing the duration by 58.
+
+### Feature Activation & Deactivation
+
+The feature can be toggled via HTTP requests:
+```cpp
+// Activate emergency stop
+if (req.indexOf("on") >= 0) {
+    emergencyActivated = true;
+}
+
+// Deactivate emergency stop
+if (req.indexOf("off") >= 0) {
+    emergencyActivated = false;
+    emergencyStopped = false;
+}
+
+```
+This allows the robot to switch the emergency stop on or off remotely.
+
 ---
 ## References
 
